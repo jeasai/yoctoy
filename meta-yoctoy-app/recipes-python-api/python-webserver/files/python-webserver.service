@@ -1,0 +1,9 @@
+[Unit]
+Description=Startup script for the python webserver
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/webserver.py
+
+[Install]
+WantedBy=multi-user.target

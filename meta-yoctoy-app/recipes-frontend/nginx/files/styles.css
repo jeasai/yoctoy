@@ -1,0 +1,70 @@
+body, html {
+    overflow-y: hidden;
+    height: 100%;
+}
+
+.container {
+    /* flexbox */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+
+    /* colors */
+    color: white;
+    background-color: rgb(43, 42, 51);
+
+    /* make div take all screen */
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0px;
+    left: 0px;
+
+    font: message-box;
+}
+
+.title {
+    flex-grow: 2;
+    font-size: 1000%;
+    font: serif;
+    margin-bottom: 50px;
+    height: 100%;
+}
+
+.list-container {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: space-evenly;
+
+    display: flex;
+    flex-direction: row;
+    gap: 5%;
+
+    width: 50%;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin: 0;
+
+    background: linear-gradient(rgba(66, 65, 77, 1), rgba(66, 65, 77, 1)) padding-box,
+              linear-gradient(to right, darkblue, darkorchid) border-box;
+  border-radius: 10em;
+  border: 4px solid transparent;
+}
+
+.item {
+    list-style: none; /* Remove list bullets */
+    font-size: 1.5vw;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: 80%;
+}

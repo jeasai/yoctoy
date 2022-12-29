@@ -1,0 +1,179 @@
+From 8adcc72295ca21f7a4869eb7c94938b579d429c9 Mon Sep 17 00:00:00 2001
+From: Jean Sainctavit <jean.sainctavit@epita.fr>
+Date: Fri, 16 Dec 2022 13:28:56 +0100
+Subject: [PATCH] Add a simple hello world char driver
+
+---
+ drivers/Kconfig        |   2 +
+ drivers/Makefile       |   1 +
+ drivers/hello/Kconfig  |   4 ++
+ drivers/hello/Makefile |   9 ++++
+ drivers/hello/hello.c  | 112 +++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 128 insertions(+)
+ create mode 100644 drivers/hello/Kconfig
+ create mode 100644 drivers/hello/Makefile
+ create mode 100644 drivers/hello/hello.c
+
+diff --git a/drivers/Kconfig b/drivers/Kconfig
+index b6a172d32a7d..9a2c2f33c7d1 100644
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -241,4 +241,6 @@ source "drivers/peci/Kconfig"
+ 
+ source "drivers/hte/Kconfig"
+ 
++source "drivers/hello/Kconfig"
++
+ endmenu
+diff --git a/drivers/Makefile b/drivers/Makefile
+index 9a30842b22c5..e42d441a457f 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -189,3 +189,4 @@ obj-$(CONFIG_COUNTER)		+= counter/
+ obj-$(CONFIG_MOST)		+= most/
+ obj-$(CONFIG_PECI)		+= peci/
+ obj-$(CONFIG_HTE)		+= hte/
++obj-$(CONFIG_HELLO) += hello/
+diff --git a/drivers/hello/Kconfig b/drivers/hello/Kconfig
+new file mode 100644
+index 000000000000..d023c5ba1cf4
+--- /dev/null
++++ b/drivers/hello/Kconfig
+@@ -0,0 +1,4 @@
++config HELLO
++	bool "Hello World driver"
++	help
++		A simple hello world driver
+diff --git a/drivers/hello/Makefile b/drivers/hello/Makefile
+new file mode 100644
+index 000000000000..120a97b5c629
+--- /dev/null
++++ b/drivers/hello/Makefile
+@@ -0,0 +1,9 @@
++obj-$(CONFIG_HELLO) += hello.o
++
++SRC := $(shell pwd)
++
++all:
++	$(MAKE) -C $(KERNEL_SRC) M=$(SRC)
++
++modules_install:
++	$(MAKE) -C $(KERNEL_SRC) M=$(SRC) modules_install
+diff --git a/drivers/hello/hello.c b/drivers/hello/hello.c
+new file mode 100644
+index 000000000000..8e56a980afc4
+--- /dev/null
++++ b/drivers/hello/hello.c
+@@ -0,0 +1,112 @@
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/init.h>
++#include <linux/kdev_t.h>
++#include <linux/fs.h>
++#include <linux/err.h>
++#include <linux/cdev.h>
++#include <linux/device.h>
++
++#define FIRST_MINOR 0
++#define NB_DEVS 1
++
++MODULE_AUTHOR("Jean Sainctavit <jean.sainctavit@epita.fr>");
++MODULE_DESCRIPTION("Hello world device driver");
++MODULE_LICENSE("MIT");
++MODULE_VERSION("0.1");
++
++dev_t dev;
++struct cdev cdev;
++int finished;
++
++char msg[] = "Hello, World!\n";
++
++int hello_open(struct inode *inode, struct file *filp)
++{
++    return 0;
++}
++
++ssize_t hello_read(struct file *filp, char __user *buf, size_t len, loff_t *off)
++{
++    int err;
++
++    if (!finished)
++    {
++        if (len < sizeof(msg))
++            err = copy_to_user(buf, msg, len);
++        else
++            err = copy_to_user(buf, msg, sizeof(msg));
++
++        if (err)
++            return -1;
++
++        finished = 1;
++        return sizeof(msg);
++    }
++    else
++    {
++        finished = 0;
++        return 0;
++    }
++}
++
++ssize_t hello_write(struct file *filp, const char __user *buf, size_t len, loff_t *off)
++{
++    (void) filp;
++    (void) buf;
++    (void) len;
++    (void) off;
++
++    return len;
++}
++
++int hello_release(struct inode *inode, struct file *file)
++{
++    return 0;
++}
++
++const struct file_operations fops = {
++    .owner = THIS_MODULE,
++    .open = hello_open,
++    .read = hello_read,
++    .write = hello_write,
++    .release = hello_release
++};
++
++static int __init hello_init_module(void)
++{
++
++    int err;
++    dev_t dev;
++
++    pr_info("Hello init module started");
++
++    err = alloc_chrdev_region(&dev, FIRST_MINOR, NB_DEVS, "hello");
++    if (err != 0)
++    {
++        printk(KERN_WARNING "hello: alloc_chrdev_region failed.");
++        return err;
++    }
++
++    cdev_init(&cdev, &fops);
++    err = cdev_add(&cdev, dev, NB_DEVS);
++    if (err < 0)
++    {
++        printk(KERN_WARNING "hello: cdev_add failed.");
++        return err;
++    }
++    
++
++    finished = 0;
++
++    return 0;
++}
++
++static void __exit hello_exit_module(void)
++{
++    cdev_del(&cdev);
++    unregister_chrdev_region(dev, NB_DEVS);
++}
++
++module_init(hello_init_module);
++module_exit(hello_exit_module);

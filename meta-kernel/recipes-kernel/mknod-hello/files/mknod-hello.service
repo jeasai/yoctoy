@@ -1,0 +1,8 @@
+[Unit]
+Description=Create a node for the hello char driver
+
+[Service]
+ExecStart=/usr/bin/mknod-hello.sh
+
+[Install]
+WantedBy=multi-user.target

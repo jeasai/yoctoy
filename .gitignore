@@ -1,0 +1,5 @@
+build
+meta-openembedded
+poky
+meta-raspberrypi
+yoctoy-raspberrypi3-64.wic.bz2
